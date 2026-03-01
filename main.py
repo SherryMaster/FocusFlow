@@ -72,6 +72,7 @@ class FocusFlowApp(ctk.CTk):
         self.grid_columnconfigure(1, weight=1) # Configure the second column (index 1) to also have a weight of 1, allowing it to expand equally with the first column
         self.grid_rowconfigure(0, weight=1) # Configure the single row (index 0) to have a weight of 1, allowing it to expand vertically to fill the available space
         
+        # Timer state variables
         self.timer_job = None # Variable to hold the reference to the scheduled timer update job, initialized to None (no job scheduled)
         self.next_tick_at = None # Variable to track the scheduled time for the next timer tick, initialized to None (no tick scheduled)
         self.tick_interval_ms = 1000 # Timer tick interval in milliseconds (1000 ms = 1 second)
@@ -79,6 +80,7 @@ class FocusFlowApp(ctk.CTk):
         
         self.all_tasks = [] # List to hold all Task objects created in the application, initialized as an empty list
         self.is_running = False # Boolean flag to track whether the timer is currently running, initialized to False (timer is not running)
+        self.progress_mode = "completed" # Variable to track the current mode of the progress bar, initialized to "completed" (indicating that the progress bar will show completed time by default) - can be toggled to "remaining" to show remaining time instead
         
         # Pomodoro session tracking variables
         self.current_cycle = 1 # Variable to track the current Pomodoro cycle, initialized to 1 (starting with the first cycle)
@@ -87,6 +89,8 @@ class FocusFlowApp(ctk.CTk):
         
         # Get initial duration
         self.time_left = self.get_current_duration() # Variable to track the remaining time in seconds for the current session, initialized by calling the get_current_duration method which returns the appropriate duration based on whether it's a work or break session
+        self.current_session_total_duration = self.time_left # Variable to store the total duration of the current session, initialized to the same value as time_left for reference when calculating progress
+        self.progress_ratio = 0 if self.progress_mode == "completed" else 1 # Variable to track the current progress ratio for the progress bar, initialized to 0 if showing completed time (indicating no progress at the start) or 1 if showing remaining time (indicating full time remaining at the start)
         
         ## UI Setup ##
         # Create two main frames: one for tasks and one for the timer, arranged side by side in the grid layout of the main window
@@ -144,13 +148,28 @@ class FocusFlowApp(ctk.CTk):
         ) # Create a frame to hold the timer display, with a foreground color of gray20 and a large corner radius to make it circular. This frame is a child of the timer frame (self.timer_frame).
         timer_display_frame.pack(pady=20, padx=20, fill="both", expand=True) # Pack the timer display frame into the timer frame with padding of 20 pixels on all sides (pady=20, padx=20), make it fill both horizontally and vertically (fill="both"), and allow it to expand to fill any remaining space (expand=True).
         
+        self.center_container = ctk.CTkFrame(timer_display_frame, fg_color="transparent") # Create a transparent frame to center the timer label and progress bar within the timer display frame. This frame is a child of the timer display frame (timer_display_frame).
+        self.center_container.pack(expand=True) # Pack the center container frame into the timer display frame and allow it to expand to fill the available space, which will help center its contents (the timer label and progress bar).
+        
         self.timer_label = ctk.CTkLabel(
-            timer_display_frame,
+            self.center_container,
             text=f"{self.time_left // 60:02d}:{self.time_left % 60:02d}",
             font=("Arial", 64, "bold"),
             text_color=("#00B4D8", "#00B4D8")
-        ) # Create a label widget to display the remaining time in the timer, formatted as MM:SS. The text color is set to a bright blue color. This label is a child of the timer display frame (timer_display_frame).
-        self.timer_label.pack(pady=40, expand=True) # Pack the timer label into the timer display frame with vertical padding of 40 pixels (pady=40) and allow it to expand to fill any remaining space (expand=True).
+        ) # Create a label widget to display the timer countdown, with the initial text formatted as MM:SS based on the time_left variable. The font is set to a bold Arial font of size 64, and the text color is set to a specific shade of blue (#00B4D8). This label is a child of the center container frame (self.center_container).
+        self.timer_label.pack(pady=(40, 0)) # Pack the timer label into the center container frame with vertical padding of 40 pixels on top and 0 pixels on the bottom (pady=(40, 0)).
+
+        self.timer_progress_bar = ctk.CTkProgressBar(self.center_container, width=200, height=5) # Create a progress bar widget to visually represent the remaining time in the current session, with a width of 200 pixels and a height of 5 pixels. This progress bar is a child of the center container frame (self.center_container).
+        self.timer_progress_bar.set(self.progress_ratio) # Set the initial value of the timer progress bar to the current progress ratio (which is initialized to 0, indicating no progress at the start).
+        self.timer_progress_bar.pack() # Pack the timer progress bar into the center container frame with vertical padding of 5 pixels on top and 40 pixels on the bottom (pady=(5, 40)), which will position it below the timer label and add spacing around it.
+        
+        self.progress_mode_label = ctk.CTkLabel(
+            self.center_container,
+            text=f"Progress Mode: {self.progress_mode.title()}",
+            font=("Arial", 10),
+            text_color="gray"
+        ) # Create a label widget to indicate the current mode of the progress bar (showing completed time), with the text "Progress Mode: Completed", an Arial font of size 10, and gray text color. This label is a child of the center container frame (self.center_container).
+        self.progress_mode_label.pack() # Pack the progress mode label into the center container frame with vertical padding of 0 pixels on top and 10 pixels on the bottom (pady=(0, 10)), placing it below the progress bar.
 
         # Button controls frame
         buttons_frame = ctk.CTkFrame(self.timer_frame, fg_color="transparent") # Create a frame to hold the timer control buttons (start, pause, reset), with a transparent background color. This frame is a child of the timer frame (self.timer_frame).
@@ -343,11 +362,17 @@ class FocusFlowApp(ctk.CTk):
         resets the remaining milliseconds until the next tick to the full tick interval, and updates
         both the timer display and session information in the UI.
         """
-        self.stop_timer()
+        self.stop_timer() # Stop the timer to ensure no updates are occurring while we reset the state
+        
+        # Reset session state for a new cycle
         self.is_work_session = True # Reset to the first session type (work session)
         self.current_cycle = 1 # Reset to the first cycle
         self.time_left = self.get_current_duration() # Reset the remaining time to the initial duration based on the session type
         self.remaining_to_next_tick_ms = self.tick_interval_ms # Reset the remaining time to the next tick to the full tick interval
+        self.current_session_total_duration = self.time_left # Reset the total duration for the current session to match the reset time_left
+        self.progress_ratio = 0 if self.progress_mode == "completed" else 1 # Reset the progress ratio based on the current progress mode (0 for completed, 1 for remaining)
+        self.timer_progress_bar.set(self.progress_ratio) # Update the timer progress bar to reflect the reset progress ratio
+        
         self.update_timer_display()
         self.update_session_info()
 
@@ -381,6 +406,13 @@ class FocusFlowApp(ctk.CTk):
         minutes = self.time_left // 60 # Calculate the number of whole minutes remaining by performing integer division of time_left by 60
         seconds = self.time_left % 60 # Calculate the remaining seconds by taking the modulus of time_left by 60
         self.timer_label.configure(text=f"{minutes:02d}:{seconds:02d}") # Update the timer_label widget's text to display the remaining time in MM:SS format, using zero-padding for single-digit minutes and seconds (e.g., 05:09)
+        
+        raw_ratio = (self.current_session_total_duration - self.time_left) / self.current_session_total_duration if self.current_session_total_duration > 0 else 0 # Calculate the raw progress ratio based on the elapsed time relative to the total session duration. If the total duration is greater than 0, calculate the ratio; otherwise, set it to 0 to avoid division by zero.
+        if self.progress_mode == "completed": # If the progress mode is set to "completed
+            self.progress_ratio = raw_ratio # In "completed" mode, the progress ratio directly reflects the elapsed time as a ratio of the total session duration (0 at the start, 1 at completion)
+        else: # If the progress mode is set to "remaining"
+            self.progress_ratio = 1 - raw_ratio # In "remaining" mode, the progress ratio is inverted to reflect the remaining time (1 at the start, 0 at completion)
+        self.timer_progress_bar.set(self.progress_ratio) # Update the timer progress bar widget to reflect the new progress ratio, visually indicating how much time has elapsed or remains based on the selected mode.
     
     def update_timer(self):
         """
