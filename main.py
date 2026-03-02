@@ -402,6 +402,7 @@ class FocusFlowApp(ctk.CTk):
         self.current_session_total_duration = self.time_left # Reset the total duration for the current session to match the reset time_left
         self.progress_ratio = 0 if self.progress_mode == "completed" else 1 # Reset the progress ratio based on the current progress mode (0 for completed, 1 for remaining)
         self.timer_progress_bar.set(self.progress_ratio) # Update the timer progress bar to reflect the reset progress ratio
+        self.apply_theme() # Apply the appropriate color scheme based on the reset session type (work session)
         
         self.update_timer_display()
         self.update_session_info()
@@ -490,6 +491,7 @@ class FocusFlowApp(ctk.CTk):
                     self.time_left = self.get_current_duration() # Reset the remaining time to the duration of the break session by calling get_current_duration, which will return the appropriate duration based on the current session type (break session in this case)
                     self.update_session_info() # Update the session information labels to reflect the new session type (break session) and current cycle
                     self.update_timer_display() # Update the timer display to show the new remaining time for the break session
+                    self.apply_theme() # Apply the new color scheme for the break session
                 else:
                     self.session_label.configure(text="SESSION COMPLETE!") # If we have completed all cycles after finishing the last work session, we update the session_label to show "SESSION COMPLETE!" to indicate that the entire Pomodoro session is finished.
             else:
@@ -501,6 +503,7 @@ class FocusFlowApp(ctk.CTk):
                     self.time_left = self.get_current_duration() # Reset the remaining time to the duration of the work session for the next cycle by calling get_current_duration, which will return the appropriate duration based on the current session type (work session in this case)
                     self.update_session_info() # Update the session information labels to reflect the new session type (work session) and current cycle
                     self.update_timer_display() # Update the timer display to show the new remaining time for the work session of the next cycle
+                    self.apply_theme() # Apply the new color scheme for the work session of the next cycle
                 else:
                     # Should not reach here if logic is correct
                     self.session_label.configure(text="SESSION COMPLETE!") # If we have completed all cycles after finishing the last break session, we update the session_label to show "SESSION COMPLETE!" to indicate that the entire Pomodoro session is finished. This case should not normally be reached if the logic is correct, since we should have already marked completion after the last work session, but this is a safeguard in case of any logical errors.
