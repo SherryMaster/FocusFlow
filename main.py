@@ -8,6 +8,16 @@ ctk.set_default_color_theme("blue")
 POMODORO_WORK_DURATION = 5  # 25 minutes in seconds
 POMODORO_BREAK_DURATION = 5  # 5 minutes in seconds
 
+WORK_COLOR_SCHEME = {
+    "bg_color": ("#FF6B6B", "#FF6B6B"),  # Background color for work sessions (red)
+    "text_color": ("#FFFFFF", "#FFFFFF"),  # Text color for work sessions (white)
+    "progress_color": ("#FFB3B3", "#FFB3B3")  # Progress bar color for work sessions (light red)
+}
+BREAK_COLOR_SCHEME = {
+    "bg_color": ("#4ECDC4", "#4ECDC4"),  # Background color for break sessions (teal)
+    "text_color": ("#FFFFFF", "#FFFFFF"),  # Text color for break sessions (white)
+    "progress_color": ("#B2F2E1", "#B2F2E1")  # Progress bar color for break sessions (light teal)
+}
 
 class Task():
     """
@@ -235,7 +245,9 @@ class FocusFlowApp(ctk.CTk):
         self.cycles_label.pack() # Pack the cycles label into the info frame with default padding.
         
         self.update_session_info() # Call the update_session_info method to set the initial session information labels based on the current session type (work session) and cycle count when the application starts.
-    
+
+        # Test print - remove later
+        print("Current color scheme:", self.get_current_color_scheme())
     # Task management methods
     
     def add_task(self):
@@ -310,6 +322,9 @@ class FocusFlowApp(ctk.CTk):
                  otherwise returns POMODORO_BREAK_DURATION for a break session.
         """
         return POMODORO_WORK_DURATION if self.is_work_session else POMODORO_BREAK_DURATION
+    
+    def get_current_color_scheme(self):
+        return WORK_COLOR_SCHEME if self.is_work_session else BREAK_COLOR_SCHEME
 
     # Timer methods
     
