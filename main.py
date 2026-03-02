@@ -246,8 +246,6 @@ class FocusFlowApp(ctk.CTk):
         
         self.update_session_info() # Call the update_session_info method to set the initial session information labels based on the current session type (work session) and cycle count when the application starts.
 
-        # Test print - remove later
-        print("Current color scheme:", self.get_current_color_scheme())
     # Task management methods
     
     def add_task(self):
