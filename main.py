@@ -9,14 +9,21 @@ POMODORO_WORK_DURATION = 5  # 25 minutes in seconds
 POMODORO_BREAK_DURATION = 5  # 5 minutes in seconds
 
 WORK_COLOR_SCHEME = {
-    "bg_color": ("#FF6B6B", "#FF6B6B"),  # Background color for work sessions (red)
-    "text_color": ("#FFFFFF", "#FFFFFF"),  # Text color for work sessions (white)
-    "progress_color": ("#FFB3B3", "#FFB3B3")  # Progress bar color for work sessions (light red)
+    "bg_color": ("#E63946", "#E63946"),  # Background color for work sessions (vibrant red)
+    "text_color": ("#FF6B6B", "#FF6B6B"),  # Primary text color for work sessions (bright red)
+    "primary_text": ("#F77F88", "#F77F88"),  # Primary text color for work sessions (redish pink)
+    "secondary_text": ("#F0F0F0", "#F0F0F0"),  # Secondary text color for work sessions (light gray)
+    "progress_color": ("#F77F88", "#F77F88"),  # Progress bar color for work sessions (coral red)
+    "hover_color": ("#D62828", "#D62828")  # Hover color for work session buttons (darker red)
 }
+
 BREAK_COLOR_SCHEME = {
-    "bg_color": ("#4ECDC4", "#4ECDC4"),  # Background color for break sessions (teal)
-    "text_color": ("#FFFFFF", "#FFFFFF"),  # Text color for break sessions (white)
-    "progress_color": ("#B2F2E1", "#B2F2E1")  # Progress bar color for break sessions (light teal)
+    "bg_color": ("#06A77D", "#06A77D"),  # Background color for break sessions (forest green)
+    "text_color": ("#52B788", "#52B788"),  # Primary text color for break sessions (sage green)
+    "primary_text": ("#06D584", "#06D584"),  # Primary text color for break sessions (bright green)
+    "secondary_text": ("#E0F5F0", "#E0F5F0"),  # Secondary text color for break sessions (very light teal)
+    "progress_color": ("#52B788", "#52B788"),  # Progress bar color for break sessions (sage green)
+    "hover_color": ("#048659", "#048659")  # Hover color for break session buttons (darker green)
 }
 
 class Task():
@@ -246,6 +253,9 @@ class FocusFlowApp(ctk.CTk):
         
         self.update_session_info() # Call the update_session_info method to set the initial session information labels based on the current session type (work session) and cycle count when the application starts.
 
+        # Test theme application
+        self.apply_theme()
+        print("Theme applied! Check the button and text colors.")
     # Task management methods
     
     def add_task(self):
@@ -323,6 +333,15 @@ class FocusFlowApp(ctk.CTk):
     
     def get_current_color_scheme(self):
         return WORK_COLOR_SCHEME if self.is_work_session else BREAK_COLOR_SCHEME
+    
+    def apply_theme(self):
+        color_scheme = self.get_current_color_scheme()
+        self.start_btn.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
+        self.pause_btn.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
+        self.reset_btn.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
+        self.add_task_button.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
+        self.timer_label.configure(text_color=color_scheme["text_color"])
+        self.timer_progress_bar.configure(progress_color=color_scheme["progress_color"])
 
     # Timer methods
     
