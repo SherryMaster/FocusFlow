@@ -318,7 +318,8 @@ class FocusFlowApp(ctk.CTk):
             the UI and the internal data model.
         """
         task_element.destroy() # Destroy the task element widget, which removes it from the UI. This does not currently remove the corresponding Task object from the internal list (self.all_tasks), so the data model will still contain the task unless additional logic is implemented to handle that.
-        # Optionally, you could also remove the corresponding Task object from self.all_tasks here.
+        
+        self.all_tasks = [task for task in self.all_tasks if task.title != task_element.winfo_children()[0].cget("text")] # Update the internal list of tasks by filtering out the task that matches the title of the deleted task element. This assumes that the first child of the task element is the checkbox with the task title, and it compares the text of that checkbox to identify which Task object to remove from the list.
 
     # Timer utility methods
 
