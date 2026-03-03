@@ -268,6 +268,8 @@ class FocusFlowApp(ctk.CTk):
         Returns:
             None: If task title is empty, the function returns early without adding the task.
         """
+        color_scheme = self.get_current_color_scheme() # Get the current color scheme based on the session type (work or break) to use for the task element styling
+        
         text = self.task_entry.get().strip() # Get the task title from the entry widget and remove leading/trailing whitespace
         description = self.task_description.get().strip() # Get the task description from the entry widget and remove leading/trailing whitespace
         
@@ -283,15 +285,15 @@ class FocusFlowApp(ctk.CTk):
         task_element.grid_columnconfigure(1, weight=1) # ...and the second column (index 1) having a weight of 1 (taking up less space for the delete button).
         
         # Create the checkbox for the task title
-        checkbox = ctk.CTkCheckBox(task_element, text=text) # Create a checkbox widget for the task title, with the text set to the task title. This checkbox is a child of the task element frame (task_element).
+        checkbox = ctk.CTkCheckBox(task_element, text=text, text_color=color_scheme["primary_text"], fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"]) # Create a checkbox widget for the task title, with the text set to the task title and text color set to the primary text color of the current color scheme. This checkbox is a child of the task element frame (task_element).
         checkbox.grid(row=0, column=0, sticky="w", padx=(10, 0), pady=(10, 0)) # Place the checkbox in the grid at row 0, column 0 of the task element frame, align it to the left (sticky="w"), and add padding of 10 pixels on the left and top (padx=(10, 0), pady=(10, 0)).
         
         # Create the label for the task description
-        description_label = ctk.CTkLabel(task_element, text=description if description else "No description", font=ctk.CTkFont(size=10), text_color="gray") # Create a label widget for the task description, with the text set to the task description if provided, or "No description" if the description is empty. The font size is set to 10 and the text color is gray. This label is a child of the task element frame (task_element).
+        description_label = ctk.CTkLabel(task_element, text=description if description else "No description", font=ctk.CTkFont(size=10), text_color=color_scheme["secondary_text"]) # Create a label widget for the task description, with the text set to the task description if provided, or "No description" if the description is empty. The font size is set to 10 and the text color is set to the secondary text color of the current color scheme. This label is a child of the task element frame (task_element).
         description_label.grid(row=1, column=0, sticky="w", padx=(20, 0), pady=(0, 5)) # Place the description label in the grid at row 1, column 0 of the task element frame, align it to the left (sticky="w"), and add padding of 20 pixels on the left and 5 pixels on the bottom (padx=(20, 0), pady=(0, 5)).
         
         # Create the delete button for the task
-        delete_button = ctk.CTkButton(task_element, text="Delete", width=60, command=lambda: self.delete_task(task_element)) # Create a button widget with the text "Delete" that calls the delete_task method with the task_element as an argument when clicked. This button is a child of the task element frame (task_element).
+        delete_button = ctk.CTkButton(task_element, text="Delete", width=60, command=lambda: self.delete_task(task_element), fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"]) # Create a button widget with the text "Delete" that calls the delete_task method with the task_element as an argument when clicked. This button is a child of the task element frame (task_element).
         delete_button.grid(row=0, column=1, rowspan=2, sticky="e", padx=(0, 10), pady=10) # Place the delete button in the grid at row 0, column 1 of the task element frame, make it span both rows (rowspan=2), align it to the right (sticky="e"), and add padding of 10 pixels on the right and top/bottom (padx=(0, 10), pady=10).
         
         # Store the task in the internal list
@@ -334,12 +336,26 @@ class FocusFlowApp(ctk.CTk):
     
     def apply_theme(self):
         color_scheme = self.get_current_color_scheme()
+        
         self.start_btn.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
         self.pause_btn.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
         self.reset_btn.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
         self.add_task_button.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
         self.timer_label.configure(text_color=color_scheme["text_color"])
         self.timer_progress_bar.configure(progress_color=color_scheme["progress_color"])
+        self.session_label.configure(text_color=color_scheme["primary_text"])
+        self.duration_label.configure(text_color=color_scheme["secondary_text"])
+        self.cycles_label.configure(text_color=color_scheme["secondary_text"])
+        
+        for task_element in self.scroll_frame.winfo_children():
+            for widget in task_element.winfo_children():
+                widget_type = type(widget).__name__
+                if widget_type == "CTkCheckBox":
+                    widget.configure(text_color=color_scheme["primary_text"], fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
+                elif widget_type == "CTkLabel":
+                    widget.configure(text_color=color_scheme["secondary_text"])
+                elif widget_type == "CTkButton":
+                    widget.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
 
     # Timer methods
     
