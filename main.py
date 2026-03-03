@@ -7,8 +7,8 @@ ctk.set_appearance_mode("system")  # Modes: "System" (default), "Dark", "Light"
 ctk.set_default_color_theme("blue")
 
 # Pomodoro durations in seconds (for testing, you can set these to shorter times like 5 seconds for work and 5 seconds for break)
-POMODORO_WORK_DURATION = 25 * 60  # 25 minutes in seconds
-POMODORO_BREAK_DURATION = 5 * 60  # 5 minutes in seconds
+POMODORO_WORK_DURATION = 5  # 25 minutes in seconds
+POMODORO_BREAK_DURATION = 5  # 5 minutes in seconds
 
 WORK_COLOR_SCHEME = {
     "bg_color": ("#E63946", "#E63946"),  # Background color for work sessions (vibrant red)
@@ -27,6 +27,27 @@ BREAK_COLOR_SCHEME = {
     "progress_color": ("#52B788", "#52B788"),  # Progress bar color for break sessions (sage green)
     "hover_color": ("#048659", "#048659")  # Hover color for break session buttons (darker green)
 }
+
+class NotificationHandler:
+    def __init__(self, app):
+        # Store app reference to allow sending notifications through the app's UI
+        pass
+
+    def notify_session_change(self, old_session, new_session, cycle):
+        # This method can be expanded to show a popup or system notification when the session changes
+        pass
+    
+    def _should_show_notifications(self):
+        # Placeholder for logic to determine if notifications should be shown (e.g., based on user settings)
+        return True # for now, we will just return True to always show notifications when the session changes
+    
+    def _create_popup_window(self, session_info):
+        # Placeholder for creating a popup window to show session change notifications
+        pass
+    
+    def _bring_window_to_focus(self):
+        # Placeholder for logic to bring the application window to focus when showing a notification
+        pass
 
 class FocusFlowApp(ctk.CTk):
     def __init__(self):
@@ -533,6 +554,11 @@ class FocusFlowApp(ctk.CTk):
                 else:
                     # Should not reach here if logic is correct
                     self.session_label.configure(text="SESSION COMPLETE!") # If we have completed all cycles after finishing the last break session, we update the session_label to show "SESSION COMPLETE!" to indicate that the entire Pomodoro session is finished. This case should not normally be reached if the logic is correct, since we should have already marked completion after the last work session, but this is a safeguard in case of any logical errors.
+
+            if self.is_work_session:
+                print(f"Work Session Started.")
+            else:
+                print(f"Break Session Started.")
         
 
 if __name__ == "__main__":
