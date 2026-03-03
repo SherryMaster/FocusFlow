@@ -378,33 +378,34 @@ class FocusFlowApp(ctk.CTk):
         self.update_session_info()
 
     def save_data(self):
-        task_data = []
-        for task_element in self.all_tasks:
-            task_info = {}
-            for widget in task_element.winfo_children():
-                if isinstance(widget, ctk.CTkCheckBox):
-                    task_info["title"] = widget.cget("text")
-                    task_info["completed"] = widget.get()
-                elif isinstance(widget, ctk.CTkLabel):
-                    task_info["description"] = widget.cget("text")
-            task_data.append(task_info)
-        
-        with open("tasks.json", "w") as f:
-            json.dump(task_data, f, indent=4)
+        try:
+            data_path = self.get_data_folder() # Get the path to the data folder where tasks will be saved
+            task_data = []
+            for task_element in self.all_tasks:
+                task_info = {}
+                for widget in task_element.winfo_children():
+                    if isinstance(widget, ctk.CTkCheckBox):
+                        task_info["title"] = widget.cget("text")
+                        task_info["completed"] = widget.get()
+                    elif isinstance(widget, ctk.CTkLabel):
+                        task_info["description"] = widget.cget("text")
+                task_data.append(task_info)
+            
+            with open(os.path.join(data_path, "tasks.json"), "w") as f:
+                json.dump(task_data, f, indent=4)
+        except Exception as e:
+            print(f"Error saving data: {e}") # Print any exceptions that occur during the save process to the console for debugging purposes
+            time.sleep(3) # Sleep briefly to allow the user to see the error message before the application closes, especially important for PyInstaller bundles where the console may close immediately after the application exits
 
-    def on_closing(self):
-        self.is_running = False # Ensure the timer is stopped when closing the application to prevent any background updates or errors related to the timer still running after the window is closed.
-        
-        if self.timer_job: # If there's a scheduled timer update, cancel it to clean up any pending operations before closing the application.
-            self.after_cancel(self.timer_job) # Cancel the scheduled timer update to prevent it from trying to update the UI after the window is closed.
-            self.timer_job = None # Reset the timer job state to None for cleanup
-        
+    def on_closing(self):     
         self.save_data() # Save the current tasks to a file before closing the application to ensure that user data is not lost when they exit the app.
         self.destroy() # Destroy the main application window, which will close the application.
 
     def load_data(self):
-        if os.path.exists("tasks.json"):
-            with open("tasks.json", "r") as f:
+        data_path = self.get_data_folder()
+        tasks_file = os.path.join(data_path, "tasks.json")
+        if os.path.exists(tasks_file):
+            with open(tasks_file, "r") as f:
                 task_data = json.load(f)
                 for task in task_data:
                     self.task_entry.delete(0, "end")
@@ -420,6 +421,17 @@ class FocusFlowApp(ctk.CTk):
             
             self.task_entry.delete(0, "end") # Clear the task entry after loading tasks to reset the input field
             self.task_description.delete(0, "end") # Clear the task description entry after loading tasks to reset the input field
+    
+    def get_data_folder(self):
+        data_path: str | None = os.getenv("LOCALAPPDATA")
+        if data_path is None:
+            data_path = os.path.expanduser("~")
+        data_path = os.path.join(data_path, "FocusFlow")
+        
+        if not os.path.exists(data_path):
+            os.makedirs(data_path)
+        
+        return data_path
     
     def update_session_info(self):
         """
