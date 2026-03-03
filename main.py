@@ -541,8 +541,10 @@ class FocusFlowApp(ctk.CTk):
                     self.update_session_info() # Update the session information labels to reflect the new session type (break session) and current cycle
                     self.update_timer_display() # Update the timer display to show the new remaining time for the break session
                     self.apply_theme() # Apply the new color scheme for the break session
+                    self.notification_handler.notify_session_change("work", "break", self.current_cycle) # Send a notification to indicate that we have transitioned from a work session to a break session, including the current cycle number in the notification
                 else:
                     self.session_label.configure(text="SESSION COMPLETE!") # If we have completed all cycles after finishing the last work session, we update the session_label to show "SESSION COMPLETE!" to indicate that the entire Pomodoro session is finished.
+                    self.notification_handler.notify_session_change("work", "complete", self.current_cycle) # Send a notification to indicate that the entire Pomodoro session is complete, including the current cycle number in the notification
             else:
                 # Break completed
                 if self.current_cycle < self.total_cycles: # If we have not yet completed all cycles, we need to transition to the next work session for the next cycle
@@ -553,9 +555,11 @@ class FocusFlowApp(ctk.CTk):
                     self.update_session_info() # Update the session information labels to reflect the new session type (work session) and current cycle
                     self.update_timer_display() # Update the timer display to show the new remaining time for the work session of the next cycle
                     self.apply_theme() # Apply the new color scheme for the work session of the next cycle
+                    self.notification_handler.notify_session_change("break", "work", self.current_cycle) # Send a notification to indicate that we have transitioned from a break session to a work session, including the current cycle number in the notification
                 else:
                     # Should not reach here if logic is correct
                     self.session_label.configure(text="SESSION COMPLETE!") # If we have completed all cycles after finishing the last break session, we update the session_label to show "SESSION COMPLETE!" to indicate that the entire Pomodoro session is finished. This case should not normally be reached if the logic is correct, since we should have already marked completion after the last work session, but this is a safeguard in case of any logical errors.
+                    self.notification_handler.notify_session_change("break", "complete", self.current_cycle) # Send a notification to indicate that the entire Pomodoro session is complete, including the current cycle number in the notification
 
             if self.is_work_session:
                 print(f"Work Session Started.")
