@@ -7,8 +7,8 @@ ctk.set_appearance_mode("system")  # Modes: "System" (default), "Dark", "Light"
 ctk.set_default_color_theme("blue")
 
 # Pomodoro durations in seconds (for testing, you can set these to shorter times like 5 seconds for work and 5 seconds for break)
-POMODORO_WORK_DURATION = 5  # 25 minutes in seconds
-POMODORO_BREAK_DURATION = 5  # 5 minutes in seconds
+POMODORO_WORK_DURATION = 25 * 60  # 25 minutes in seconds
+POMODORO_BREAK_DURATION = 5 * 60  # 5 minutes in seconds
 
 WORK_COLOR_SCHEME = {
     "bg_color": ("#E63946", "#E63946"),  # Background color for work sessions (vibrant red)
@@ -393,6 +393,12 @@ class FocusFlowApp(ctk.CTk):
             json.dump(task_data, f, indent=4)
 
     def on_closing(self):
+        self.is_running = False # Ensure the timer is stopped when closing the application to prevent any background updates or errors related to the timer still running after the window is closed.
+        
+        if self.timer_job: # If there's a scheduled timer update, cancel it to clean up any pending operations before closing the application.
+            self.after_cancel(self.timer_job) # Cancel the scheduled timer update to prevent it from trying to update the UI after the window is closed.
+            self.timer_job = None # Reset the timer job state to None for cleanup
+        
         self.save_data() # Save the current tasks to a file before closing the application to ensure that user data is not lost when they exit the app.
         self.destroy() # Destroy the main application window, which will close the application.
 
