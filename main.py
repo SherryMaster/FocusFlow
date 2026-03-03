@@ -29,25 +29,87 @@ BREAK_COLOR_SCHEME = {
 }
 
 class NotificationHandler:
-    def __init__(self, app):
+    def __init__(self, app: FocusFlowApp):
         # Store app reference to allow sending notifications through the app's UI
-        pass
+        self.app = app
 
     def notify_session_change(self, old_session, new_session, cycle):
-        # This method can be expanded to show a popup or system notification when the session changes
-        pass
+        
+        if not self._should_show_notifications():
+            return # If the logic determines that we should not show notifications (e.g., based on user settings), we return early and do not proceed with showing a notification for the session change
+        
+        # prepare session info dict
+        session_info = {
+            "old": old_session,
+            "new": new_session,
+            "cycle": cycle,
+            "total_cycles": self.app.total_cycles
+        }
+        
+        self._bring_window_to_focus()
+        self._create_popup_window(session_info)
     
     def _should_show_notifications(self):
         # Placeholder for logic to determine if notifications should be shown (e.g., based on user settings)
         return True # for now, we will just return True to always show notifications when the session changes
     
     def _create_popup_window(self, session_info):
-        # Placeholder for creating a popup window to show session change notifications
-        pass
-    
+        old_session = session_info["old"]
+        new_session = session_info["new"]
+        cycle = session_info["cycle"]
+        total_cycles = session_info["total_cycles"]
+        
+        if new_session == "break":
+            title = "Time for a Break!" # Title for the notification when transitioning to a break session
+            message = f"Work Session Completed. Take a short break!\nCurrent Cycle: {cycle}/{total_cycles}" # Message for the notification when transitioning to a break session, including the current cycle and total cycles
+            color_scheme = BREAK_COLOR_SCHEME # Use the break color scheme for the notification when transitioning to a break session
+        elif new_session == "work":
+            title = "Back to Work!" # Title for the notification when transitioning to a work session
+            message = f"Cycle {cycle} of {total_cycles} starting now. Focus up!" # Message for the notification when transitioning to a work session, including the current cycle and total cycles
+            color_scheme = WORK_COLOR_SCHEME # Use the work color scheme for the notification when transitioning to a work session
+        elif new_session == "complete":
+            title = "Session Complete!" # Title for the notification when the entire Pomodoro session is complete
+            message = f"Congratulations! You've completed all {total_cycles} cycles. Take a well-deserved break!" # Message for the notification when the entire Pomodoro session is complete, including the total number of cycles completed
+            color_scheme = WORK_COLOR_SCHEME # Use the work color scheme for the notification when the session is complete, as it's a celebratory message related to completing the work sessions
+        else:
+            return # If the new session type is not recognized, we return early and do not create a notification
+        
+        popup = ctk.CTkToplevel(self.app) # Create a new top-level window (popup) that is a child of the main application window (self.app) to display the notification message
+        popup.title("FocusFlow Alert!") # Set the title of the popup window to the appropriate title based on the session change
+        popup.geometry("400x200") # Set the size of the popup window to 400 pixels wide and 200 pixels tall
+        
+        popup.attributes("-topmost", True) # Make the popup window stay on top of all other windows to ensure it is visible to the user when it appears
+        
+        # Center the popup on screen
+        popup.update_idletasks()
+        x = (popup.winfo_screenwidth() // 2) - (popup.winfo_width() // 2)
+        y = (popup.winfo_screenheight() // 2) - (popup.winfo_height() // 2)
+        popup.geometry(f"+{x}+{y}")
+        
+        title_label = ctk.CTkLabel(popup, text=title, font=("Arial", 16, "bold"), text_color=color_scheme["primary_text"]) # Create a label widget for the title of the notification, with the appropriate title text and styling based on the session change. This label is a child of the popup window (popup).
+        title_label.pack(pady=(20, 10)) # Pack the title label into the popup window with vertical padding of 20 pixels on top and 10 pixels on the bottom (pady=(20, 10)).
+        
+        message_label = ctk.CTkLabel(popup, text=message, font=("Arial", 12), text_color=color_scheme["secondary_text"]) # Create a label widget for the message of the notification, with the appropriate message text and styling based on the session change. This label is a child of the popup window (popup).
+        message_label.pack(pady=(0, 20)) # Pack the message label into the popup window with vertical padding of 0 pixels on top and 20 pixels on the bottom (pady=(0, 20)).
+        
+        if new_session != "complete":
+            cycle_label = ctk.CTkLabel(popup, text=f"Cycle {cycle} of {total_cycles}", font=("Arial", 10), text_color=color_scheme["secondary_text"]) # Create a label widget to display the current cycle count relative to the total number of cycles (e.g., "Cycle 1 of 4"), with appropriate styling based on the session change. This label is only created if the new session is not "complete", as it is relevant for work and break session changes but not for the completion notification. This label is a child of the popup window (popup).
+            cycle_label.pack(pady=(0, 10)) # Pack the cycle label into the popup window with vertical padding of 0 pixels on top and 10 pixels on the bottom (pady=(0, 10)).
+        
+        ok_button = ctk.CTkButton(popup, text="OK", command=popup.destroy, width=80, fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"]) # Create a button widget with the text "OK" that destroys the popup window when clicked. The button has a fixed width of 80 pixels and styling based on the session change. This button is a child of the popup window (popup).
+        ok_button.pack(pady=(0, 10)) # Pack the ok button into the popup window with vertical padding of 0 pixels on top and 10 pixels on the bottom (pady=(0, 10)).
+        
+        popup.grab_set() # Grab the focus to the popup window to ensure that the user interacts with it before returning to the main application window, which is important for acknowledging the session change notification.
+        popup.focus_force() # Force focus on the popup window to ensure it is active and ready for user interaction when it appears, which helps ensure that the notification is seen and acknowledged by the user.
+
     def _bring_window_to_focus(self):
-        # Placeholder for logic to bring the application window to focus when showing a notification
-        pass
+        try:
+            self.app.deiconify() # Restore the window if it is minimized
+            self.app.lift() # Bring the window to the front
+            self.app.focus_force() # Force focus on the window
+            
+        except Exception as e:
+            print(f"Error bringing window to focus: {e}") # Log any exceptions that occur while trying to bring the window to focus, which can help with debugging issues related to notifications not appearing correctly
 
 class FocusFlowApp(ctk.CTk):
     def __init__(self):
