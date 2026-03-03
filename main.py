@@ -28,59 +28,6 @@ BREAK_COLOR_SCHEME = {
     "hover_color": ("#048659", "#048659")  # Hover color for break session buttons (darker green)
 }
 
-class Task():
-    """
-    A class representing a task with basic completion tracking.
-    Attributes:
-        title (str): The title of the task.
-        description (str): A detailed description of the task.
-        _completed (bool): Private attribute tracking whether the task is completed.
-    Methods:
-        mark_completed(): Mark the task as completed.
-        mark_incomplete(): Mark the task as incomplete.
-        is_completed(): Check if the task is completed.
-    """
-    def __init__(self, title, description) -> None:
-        """
-        Initialize a task instance.
-
-        Args:
-            title (str): The title of the task.
-            description (str): The description of the task.
-        """
-        self.title = title # Task title
-        self.description = description # Task description
-        self._completed = False # Private attribute to track completion status, initialized to False (incomplete)
-    
-    def mark_completed(self):
-        """
-        Mark the task as completed.
-        
-        Sets the internal completion status of the task to True, indicating
-        that the task has been finished.
-        """
-        self._completed = True # Mark the task as completed by setting the private attribute to True
-
-    def mark_incomplete(self):
-        """
-        Mark the task as incomplete.
-        
-        Sets the internal completion status to False, indicating that the task
-        is no longer marked as completed.
-        """
-        self._completed = False # Mark the task as incomplete by setting the private attribute to False
-    
-    def is_completed(self):
-        """
-        Check if the task is completed.
-        
-        Returns:
-            bool: True if the task is completed, False otherwise.
-        """
-        return self._completed # Return the completion status of the task by returning the value of the private attribute _completed
-    
-
-
 class FocusFlowApp(ctk.CTk):
     def __init__(self):
         super().__init__() # Initialize the parent class (CTk) to set up the main application window
@@ -256,6 +203,8 @@ class FocusFlowApp(ctk.CTk):
         self.update_session_info() # Call the update_session_info method to set the initial session information labels based on the current session type (work session) and cycle count when the application starts.
 
         self.apply_theme()
+        
+        self.protocol("WM_DELETE_WINDOW", self.on_closing) # Set the protocol for handling the window close event (when the user clicks the close button on the window) to call the on_closing method, which can be used to perform any necessary cleanup (e.g., saving data) before the application exits.
     # Task management methods
     
     def add_task(self):
@@ -299,7 +248,7 @@ class FocusFlowApp(ctk.CTk):
         delete_button.grid(row=0, column=1, rowspan=2, sticky="e", padx=(0, 10), pady=10) # Place the delete button in the grid at row 0, column 1 of the task element frame, make it span both rows (rowspan=2), align it to the right (sticky="e"), and add padding of 10 pixels on the right and top/bottom (padx=(0, 10), pady=10).
         
         # Store the task in the internal list
-        self.all_tasks.append(Task(title=text, description=description)) # Create a new Task object with the provided title and description, and add it to the internal list of all tasks (self.all_tasks).
+        self.all_tasks.append(task_element) # Add the task element frame to the internal list of tasks (self.all_tasks) to keep track of it for future reference (e.g., for deletion or updates). Note that this currently stores the UI element rather than a separate Task object, which may be something to consider for better data management.
         
         # Clear the input fields after adding the task
         self.task_entry.delete(0, "end") # Clear the task title entry widget by deleting the text from index 0 to the end, effectively resetting it for the next input
@@ -319,7 +268,8 @@ class FocusFlowApp(ctk.CTk):
         """
         task_element.destroy() # Destroy the task element widget, which removes it from the UI. This does not currently remove the corresponding Task object from the internal list (self.all_tasks), so the data model will still contain the task unless additional logic is implemented to handle that.
         
-        self.all_tasks = [task for task in self.all_tasks if task.title != task_element.winfo_children()[0].cget("text")] # Update the internal list of tasks by filtering out the task that matches the title of the deleted task element. This assumes that the first child of the task element is the checkbox with the task title, and it compares the text of that checkbox to identify which Task object to remove from the list.
+        self.all_tasks = [task for task in self.all_tasks if task != task_element] # Update the internal list of tasks by filtering out the deleted task element. This ensures that the internal data model remains consistent with the UI after a task is deleted.
+        
 
     # Timer utility methods
 
@@ -425,6 +375,27 @@ class FocusFlowApp(ctk.CTk):
         
         self.update_timer_display()
         self.update_session_info()
+
+    def save_data(self):
+        task_data = []
+        for task_element in self.all_tasks:
+            task_info = {}
+            for widget in task_element.winfo_children():
+                if isinstance(widget, ctk.CTkCheckBox):
+                    task_info["title"] = widget.cget("text")
+                    task_info["completed"] = widget.get()
+                elif isinstance(widget, ctk.CTkLabel):
+                    task_info["description"] = widget.cget("text")
+            task_data.append(task_info)
+        
+        with open("tasks.json", "w") as f:
+            json.dump(task_data, f, indent=4)
+        
+        print(f"{len(task_data)} tasks saved successfully.")
+
+    def on_closing(self):
+        self.save_data() # Save the current tasks to a file before closing the application to ensure that user data is not lost when they exit the app.
+        self.destroy() # Destroy the main application window, which will close the application.
 
     def update_session_info(self):
         """
