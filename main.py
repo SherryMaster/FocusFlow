@@ -205,6 +205,7 @@ class FocusFlowApp(ctk.CTk):
         self.apply_theme()
         
         self.protocol("WM_DELETE_WINDOW", self.on_closing) # Set the protocol for handling the window close event (when the user clicks the close button on the window) to call the on_closing method, which can be used to perform any necessary cleanup (e.g., saving data) before the application exits.
+        self.load_data() # Call the load_data method to load any previously saved tasks from a file when the application starts, allowing the user to continue where they left off with their task list.
     # Task management methods
     
     def add_task(self):
@@ -390,13 +391,30 @@ class FocusFlowApp(ctk.CTk):
         
         with open("tasks.json", "w") as f:
             json.dump(task_data, f, indent=4)
-        
-        print(f"{len(task_data)} tasks saved successfully.")
 
     def on_closing(self):
         self.save_data() # Save the current tasks to a file before closing the application to ensure that user data is not lost when they exit the app.
         self.destroy() # Destroy the main application window, which will close the application.
 
+    def load_data(self):
+        if os.path.exists("tasks.json"):
+            with open("tasks.json", "r") as f:
+                task_data = json.load(f)
+                for task in task_data:
+                    self.task_entry.delete(0, "end")
+                    self.task_description.delete(0, "end")
+                    self.task_entry.insert(0, task.get("title", ""))
+                    self.task_description.insert(0, task.get("description", ""))
+                    self.add_task()
+                    if task.get("completed", False):
+                        last_task_element = self.all_tasks[-1]
+                        for widget in last_task_element.winfo_children():
+                            if isinstance(widget, ctk.CTkCheckBox):
+                                widget.select() # Mark the checkbox as selected if the task was completed in the saved data
+            
+            self.task_entry.delete(0, "end") # Clear the task entry after loading tasks to reset the input field
+            self.task_description.delete(0, "end") # Clear the task description entry after loading tasks to reset the input field
+    
     def update_session_info(self):
         """
         Update the session information labels based on the current session type.
