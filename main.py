@@ -74,6 +74,8 @@ class FocusFlowApp(ctk.CTk):
         self.total_cycles = 4 # Total number of Pomodoro cycles to complete, set to 4 (default for a standard Pomodoro session)
         self.is_work_session = True # Boolean flag to track whether the current session is a work session (True) or a break session (False), initialized to True (starting with a work session)
         
+        self.notification_handler = NotificationHandler(self) # Create an instance of the NotificationHandler class, passing a reference to the main application (self) to allow it to send notifications through the app's UI. This handler will be responsible for managing notifications related to session changes and other events in the application.
+        
         # Get initial duration
         self.time_left = self.get_current_duration() # Variable to track the remaining time in seconds for the current session, initialized by calling the get_current_duration method which returns the appropriate duration based on whether it's a work or break session
         self.current_session_total_duration = self.time_left # Variable to store the total duration of the current session, initialized to the same value as time_left for reference when calculating progress
