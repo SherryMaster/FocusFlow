@@ -1,5 +1,7 @@
 import customtkinter as ctk
 import time
+import json
+import os
 
 ctk.set_appearance_mode("system")  # Modes: "System" (default), "Dark", "Light"
 ctk.set_default_color_theme("blue")
