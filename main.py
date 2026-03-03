@@ -350,11 +350,11 @@ class FocusFlowApp(ctk.CTk):
         for task_element in self.scroll_frame.winfo_children():
             for widget in task_element.winfo_children():
                 widget_type = type(widget).__name__
-                if widget_type == "CTkCheckBox":
+                if isinstance(widget, ctk.CTkCheckBox):
                     widget.configure(text_color=color_scheme["primary_text"], fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
-                elif widget_type == "CTkLabel":
+                elif isinstance(widget, ctk.CTkLabel):
                     widget.configure(text_color=color_scheme["secondary_text"])
-                elif widget_type == "CTkButton":
+                elif isinstance(widget, ctk.CTkButton):
                     widget.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
 
     # Timer methods
