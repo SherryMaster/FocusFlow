@@ -8,8 +8,8 @@ ctk.set_appearance_mode("system")  # Modes: "System" (default), "Dark", "Light"
 ctk.set_default_color_theme("blue")
 
 # Pomodoro durations in seconds (for testing, you can set these to shorter times like 5 seconds for work and 5 seconds for break)
-POMODORO_WORK_DURATION = 5  # 25 minutes in seconds
-POMODORO_BREAK_DURATION = 5  # 5 minutes in seconds
+POMODORO_WORK_DURATION = 25 * 60  # 25 minutes in seconds
+POMODORO_BREAK_DURATION = 5 * 60  # 5 minutes in seconds
 
 WORK_COLOR_SCHEME = {
     "bg_color": ("#E63946", "#E63946"),  # Background color for work sessions (vibrant red)
@@ -580,8 +580,6 @@ class FocusFlowApp(ctk.CTk):
 
     def toggle_notifications(self):
         self.notifications_enabled = self.notification_toggle.get() == 1 # Toggle the enabled state of the notification handler based on the current state when the user interacts with the notification toggle checkbox. This allows the user to enable or disable notifications for session changes.
-        status = "enabled" if self.notifications_enabled else "disabled" # Determine the new status of notifications (enabled or disabled) based on the updated state of the notification handler.
-        print(f"Notifications {status}") # Print the new status of notifications to the console for debugging purposes, allowing the developer to verify that the toggle functionality is working as expected when the user interacts with the checkbox.
 
     def update_timer_display(self):
         """
@@ -667,11 +665,6 @@ class FocusFlowApp(ctk.CTk):
                     # Should not reach here if logic is correct
                     self.session_label.configure(text="SESSION COMPLETE!") # If we have completed all cycles after finishing the last break session, we update the session_label to show "SESSION COMPLETE!" to indicate that the entire Pomodoro session is finished. This case should not normally be reached if the logic is correct, since we should have already marked completion after the last work session, but this is a safeguard in case of any logical errors.
                     self.notification_handler.notify_session_change("break", "complete", self.current_cycle) # Send a notification to indicate that the entire Pomodoro session is complete, including the current cycle number in the notification
-
-            if self.is_work_session:
-                print(f"Work Session Started.")
-            else:
-                print(f"Break Session Started.")
         
 
 if __name__ == "__main__":
