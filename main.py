@@ -2,6 +2,7 @@ import customtkinter as ctk
 import time
 import json
 import os
+import winsound
 
 ctk.set_appearance_mode("system")  # Modes: "System" (default), "Dark", "Light"
 ctk.set_default_color_theme("blue")
@@ -100,6 +101,8 @@ class NotificationHandler:
         
         popup.grab_set() # Grab the focus to the popup window to ensure that the user interacts with it before returning to the main application window, which is important for acknowledging the session change notification.
         popup.focus_force() # Force focus on the popup window to ensure it is active and ready for user interaction when it appears, which helps ensure that the notification is seen and acknowledged by the user.
+        
+        winsound.MessageBeep(winsound.MB_ICONEXCLAMATION) # Play a system sound (exclamation) to alert the user when the notification popup appears, providing an auditory cue in addition to the visual notification to help ensure that the user notices the session change.
 
     def _bring_window_to_focus(self):
         try:
@@ -109,6 +112,13 @@ class NotificationHandler:
             
         except Exception as e:
             print(f"Error bringing window to focus: {e}") # Log any exceptions that occur while trying to bring the window to focus, which can help with debugging issues related to notifications not appearing correctly
+            try:
+                self.app.update()
+                self.app.state('normal')
+                self.app.attributes('-topmost', 1)
+                self.app.attributes('-topmost', 0)
+            except:
+                pass
 
 class FocusFlowApp(ctk.CTk):
     def __init__(self):
