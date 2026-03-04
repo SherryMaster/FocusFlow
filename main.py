@@ -3,6 +3,7 @@ import time
 import json
 import os
 import winsound
+import tkinter as tk
 
 ctk.set_appearance_mode("system")  # Modes: "System" (default), "Dark", "Light"
 ctk.set_default_color_theme("blue")
@@ -27,6 +28,15 @@ BREAK_COLOR_SCHEME = {
     "secondary_text": ("#E0F5F0", "#E0F5F0"),  # Secondary text color for break sessions (very light teal)
     "progress_color": ("#52B788", "#52B788"),  # Progress bar color for break sessions (sage green)
     "hover_color": ("#048659", "#048659")  # Hover color for break session buttons (darker green)
+}
+
+DEFAULT_COLOR_SCHEME = {
+    "bg_color": ("#0077B6", "#0077B6"),  # Background color for normal sessions (ocean blue)
+    "text_color": ("#00B4D8", "#00B4D8"),  # Primary text color for normal sessions (sky blue)
+    "primary_text": ("#0096C7", "#0096C7"),  # Primary text color for normal sessions (medium blue)
+    "secondary_text": ("#E0F4FF", "#E0F4FF"),  # Secondary text color for normal sessions (light blue)
+    "progress_color": ("#00B4D8", "#00B4D8"),  # Progress bar color for normal sessions (sky blue)
+    "hover_color": ("#005A87", "#005A87")  # Hover color for normal session buttons (darker blue)
 }
 
 class NotificationHandler:
@@ -137,7 +147,8 @@ class FocusFlowApp(ctk.CTk):
         self.remaining_to_next_tick_ms = self.tick_interval_ms # Variable to track the remaining time in milliseconds until the next timer tick, initialized to the full tick interval (1000 ms)
         
         self.all_tasks = [] # List to hold all Task objects created in the application, initialized as an empty list
-        self.is_running = False # Boolean flag to track whether the timer is currently running, initialized to False (timer is not running)
+        self.is_timer_running = False # Boolean flag to track whether the timer is currently running, initialized to False (timer is not running)
+        self.is_pomodoro_active = False # Boolean flag to track whether a Pomodoro session is currently active, initialized to False (no Pomodoro session is active)
         self.progress_mode = "completed" # Variable to track the current mode of the progress bar, initialized to "completed" (indicating that the progress bar will show completed time by default) - can be toggled to "remaining" to show remaining time instead
         
         # Pomodoro session tracking variables
@@ -311,6 +322,31 @@ class FocusFlowApp(ctk.CTk):
         
         self.protocol("WM_DELETE_WINDOW", self.on_closing) # Set the protocol for handling the window close event (when the user clicks the close button on the window) to call the on_closing method, which can be used to perform any necessary cleanup (e.g., saving data) before the application exits.
         self.load_data() # Call the load_data method to load any previously saved tasks from a file when the application starts, allowing the user to continue where they left off with their task list.
+    
+    def set_logo(self, logo_path):
+        """
+        Set the application logo in the title bar using an ICO, PNG, or GIF image file.
+        Args:
+            logo_path (str): The file path to the image to be used as the application logo.
+        """
+        try:
+            logo_path = self.resource_path(logo_path)
+            if logo_path.lower().endswith('.ico'):
+                # ICO files require iconbitmap()
+                self.iconbitmap(logo_path)
+            else:
+                # PNG and GIF files use tk.PhotoImage
+                self.app_logo = tk.PhotoImage(file=logo_path)
+                self.iconphoto(True, self.app_logo)
+        except Exception as e:
+            print(f"Error loading logo image: {e}")
+    
+    def resource_path(self, relative_path):
+        """Resolve asset paths for both dev and PyInstaller builds"""
+        import sys
+        base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_path, relative_path)
+    
     # Task management methods
     
     def add_task(self):
@@ -390,10 +426,18 @@ class FocusFlowApp(ctk.CTk):
         return POMODORO_WORK_DURATION if self.is_work_session else POMODORO_BREAK_DURATION
     
     def get_current_color_scheme(self):
-        return WORK_COLOR_SCHEME if self.is_work_session else BREAK_COLOR_SCHEME
+        return (WORK_COLOR_SCHEME if self.is_work_session else BREAK_COLOR_SCHEME) if self.is_pomodoro_active else DEFAULT_COLOR_SCHEME
     
     def apply_theme(self):
         color_scheme = self.get_current_color_scheme()
+        
+        # Apply the logo based on current color scheme (default, work, or break)
+        if color_scheme == WORK_COLOR_SCHEME:
+            self.set_logo("assets/FocusFlow logo Red.ico") # Set the application logo to the light version for work sessions
+        elif color_scheme == BREAK_COLOR_SCHEME:
+            self.set_logo("assets/FocusFlow logo Green.ico") # Set the application logo to the dark version for break sessions
+        else:
+            self.set_logo("assets/FocusFlow logo.ico") # Set the application logo to the default version for non-Pomodoro sessions
         
         self.start_btn.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
         self.pause_btn.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
@@ -427,15 +471,17 @@ class FocusFlowApp(ctk.CTk):
         - Timer is already running
         - Remaining time is less than or equal to 0 (user should reset first)
         """
-        if self.is_running:
+        if self.is_timer_running:
             return  # Timer is already running
         if self.time_left <= 0:
             return # Cannot start if time is already up, user should reset first
         
-        self.is_running = True # Start or resume the timer
+        self.is_timer_running = True # Start or resume the timer
+        self.is_pomodoro_active = True # Mark that a Pomodoro session is active when the timer starts
         delay_ms = max(1, self.remaining_to_next_tick_ms) # Ensure we don't schedule with 0 or negative delay
         self.next_tick_at = time.monotonic() + (delay_ms / 1000) # Schedule the next update based on remaining time to next tick
         self.timer_job = self.after(delay_ms, self.update_timer) # Schedule the first update immediately or after the remaining time to next tick
+        self.apply_theme() # Apply the appropriate color scheme based on the session type when the timer starts (work or break)
     
     def stop_timer(self):
         """
@@ -449,7 +495,7 @@ class FocusFlowApp(ctk.CTk):
         Returns:
             None
         """
-        self.is_running = False # Stop the timer
+        self.is_timer_running = False # Stop the timer
         if self.timer_job: # If there's a scheduled timer update, calculate remaining time to next tick and cancel it
             if self.next_tick_at is not None: # Calculate remaining time to next tick in milliseconds
                 remaining_ms = int(round((self.next_tick_at - time.monotonic()) * 1000)) # Convert to milliseconds
@@ -471,6 +517,7 @@ class FocusFlowApp(ctk.CTk):
         # Reset session state for a new cycle
         self.is_work_session = True # Reset to the first session type (work session)
         self.current_cycle = 1 # Reset to the first cycle
+        self.is_pomodoro_active = False # Mark that no Pomodoro session is active after reset until the user starts the timer again
         self.time_left = self.get_current_duration() # Reset the remaining time to the initial duration based on the session type
         self.remaining_to_next_tick_ms = self.tick_interval_ms # Reset the remaining time to the next tick to the full tick interval
         self.current_session_total_duration = self.time_left # Reset the total duration for the current session to match the reset time_left
@@ -615,7 +662,7 @@ class FocusFlowApp(ctk.CTk):
         - Final cycle completion → Session complete state
         Does nothing if the timer is not currently running.
         """
-        if not self.is_running: # If the timer is not running, we should not update the timer, so we return early.
+        if not self.is_timer_running: # If the timer is not running, we should not update the timer, so we return early.
             return # Timer is not running, so we do not update the timer and return early.
 
         if self.time_left > 0: # Decrement the remaining time by 1 second if there is still time left
@@ -623,7 +670,7 @@ class FocusFlowApp(ctk.CTk):
 
         self.update_timer_display() # Update the timer display to reflect the new remaining time after decrementing
 
-        if self.time_left > 0 and self.is_running: 
+        if self.time_left > 0 and self.is_timer_running: 
             # If there is still time left and the timer is still running, we need to schedule the next update for the timer tick.
             
             self.remaining_to_next_tick_ms = self.tick_interval_ms # Reset the remaining time to the next tick to the full tick interval (1000 ms) since we just completed a tick
@@ -632,7 +679,7 @@ class FocusFlowApp(ctk.CTk):
         else:
             # Time has run out for the current session, we need to transition to the next session or mark completion if all cycles are done. We also need to stop the timer since the current session is complete.
             
-            self.is_running = False # Stop the timer since the current session has completed
+            self.is_timer_running = False # Stop the timer since the current session has completed
             self.timer_job = None # Reset the timer job state since we are no longer scheduling updates
             self.next_tick_at = None # Reset the next tick time state since we are no longer scheduling updates
             self.remaining_to_next_tick_ms = self.tick_interval_ms # Reset the remaining time to the next tick to the full tick interval for the next session
