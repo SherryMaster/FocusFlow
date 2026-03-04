@@ -50,8 +50,7 @@ class NotificationHandler:
         self._create_popup_window(session_info)
     
     def _should_show_notifications(self):
-        # Placeholder for logic to determine if notifications should be shown (e.g., based on user settings)
-        return True # for now, we will just return True to always show notifications when the session changes
+        return self.app.notifications_enabled # Check the notifications_enabled flag in the main application to determine whether notifications should be shown. This allows the user to toggle notifications on or off, and this method centralizes that logic for easy checking before showing any notification.
     
     def _create_popup_window(self, session_info):
         old_session = session_info["old"]
@@ -137,6 +136,7 @@ class FocusFlowApp(ctk.CTk):
         self.is_work_session = True # Boolean flag to track whether the current session is a work session (True) or a break session (False), initialized to True (starting with a work session)
         
         self.notification_handler = NotificationHandler(self) # Create an instance of the NotificationHandler class, passing a reference to the main application (self) to allow it to send notifications through the app's UI. This handler will be responsible for managing notifications related to session changes and other events in the application.
+        self.notifications_enabled = True # Boolean flag to track whether notifications are enabled, initialized to True (notifications will be shown by default)
         
         # Get initial duration
         self.time_left = self.get_current_duration() # Variable to track the remaining time in seconds for the current session, initialized by calling the get_current_duration method which returns the appropriate duration based on whether it's a work or break session
@@ -285,6 +285,16 @@ class FocusFlowApp(ctk.CTk):
         ) # Create a label widget to display the current cycle count relative to the total number of cycles (e.g., "Cycles: 1 / 4"), with an Arial font of size 10 and gray text color. The initial text is set based on the current cycle and total cycles. This label is a child of the info frame (info_frame).
         self.cycles_label.pack() # Pack the cycles label into the info frame with default padding.
         
+        self.notification_toggle = ctk.CTkCheckBox(
+            info_frame,
+            text="Enable Notifications",
+            font=("Arial", 10),
+            text_color="gray",
+            command=self.toggle_notifications
+        ) # Create a checkbox widget to allow the user to enable or disable notifications, with the text "Enable Notifications", an Arial font of size 10, and gray text color. The checkbox calls the toggle_notifications method when toggled. This checkbox is a child of the info frame (info_frame).
+        self.notification_toggle.pack(pady=(10, 0)) # Pack the notification toggle checkbox into the info frame with vertical padding of 10 pixels on top and 0 pixels on the bottom (pady=(10, 0)).
+        self.notification_toggle.select() # Set the notification toggle checkbox to be selected (enabled) by default when the application starts.
+        
         self.update_session_info() # Call the update_session_info method to set the initial session information labels based on the current session type (work session) and cycle count when the application starts.
 
         self.apply_theme()
@@ -356,7 +366,6 @@ class FocusFlowApp(ctk.CTk):
         
         self.all_tasks = [task for task in self.all_tasks if task != task_element] # Update the internal list of tasks by filtering out the deleted task element. This ensures that the internal data model remains consistent with the UI after a task is deleted.
         
-
     # Timer utility methods
 
     def get_current_duration(self):
@@ -478,6 +487,14 @@ class FocusFlowApp(ctk.CTk):
             
             with open(os.path.join(data_path, "tasks.json"), "w") as f:
                 json.dump(task_data, f, indent=4)
+            
+            settings_data = {
+                "notifications_enabled": self.notifications_enabled,
+            }
+            
+            with open(os.path.join(data_path, "settings.json"), "w") as f:
+                json.dump(settings_data, f, indent=4)
+            
         except Exception as e:
             print(f"Error saving data: {e}") # Print any exceptions that occur during the save process to the console for debugging purposes
             time.sleep(3) # Sleep briefly to allow the user to see the error message before the application closes, especially important for PyInstaller bundles where the console may close immediately after the application exits
@@ -489,6 +506,9 @@ class FocusFlowApp(ctk.CTk):
     def load_data(self):
         data_path = self.get_data_folder()
         tasks_file = os.path.join(data_path, "tasks.json")
+        settings_file = os.path.join(data_path, "settings.json")
+        
+        # load tasks
         if os.path.exists(tasks_file):
             with open(tasks_file, "r") as f:
                 task_data = json.load(f)
@@ -506,6 +526,16 @@ class FocusFlowApp(ctk.CTk):
             
             self.task_entry.delete(0, "end") # Clear the task entry after loading tasks to reset the input field
             self.task_description.delete(0, "end") # Clear the task description entry after loading tasks to reset the input field
+        
+        # load settings
+        if os.path.exists(settings_file):
+            with open(settings_file, "r") as f:
+                settings_data = json.load(f)
+                self.notifications_enabled = settings_data.get("notifications_enabled", True) # Load the notifications enabled state from the saved settings, defaulting to True if not found
+                if self.notifications_enabled:
+                    self.notification_toggle.select() # Set the notification toggle checkbox to selected if notifications are enabled in the loaded settings
+                else:
+                    self.notification_toggle.deselect() # Set the notification toggle checkbox to deselected if notifications are disabled in the loaded settings
     
     def get_data_folder(self):
         data_path: str | None = os.getenv("LOCALAPPDATA")
@@ -537,6 +567,11 @@ class FocusFlowApp(ctk.CTk):
             self.duration_label.configure(text=f"Duration: {break_mins} mins") # Update the duration label to show the break duration in minutes
         
         self.cycles_label.configure(text=f"Cycles: {self.current_cycle} / {self.total_cycles}") # Update the cycles label to show the current cycle count relative to the total number of cycles (e.g., "Cycles: 1 / 4")
+
+    def toggle_notifications(self):
+        self.notifications_enabled = self.notification_toggle.get() == 1 # Toggle the enabled state of the notification handler based on the current state when the user interacts with the notification toggle checkbox. This allows the user to enable or disable notifications for session changes.
+        status = "enabled" if self.notifications_enabled else "disabled" # Determine the new status of notifications (enabled or disabled) based on the updated state of the notification handler.
+        print(f"Notifications {status}") # Print the new status of notifications to the console for debugging purposes, allowing the developer to verify that the toggle functionality is working as expected when the user interacts with the checkbox.
 
     def update_timer_display(self):
         """
