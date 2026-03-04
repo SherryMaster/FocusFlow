@@ -5,7 +5,7 @@ import os
 import winsound
 import tkinter as tk
 
-ctk.set_appearance_mode("system")  # Modes: "System" (default), "Dark", "Light"
+ctk.set_appearance_mode("light")  # Modes: "System" (default), "Dark", "Light"
 ctk.set_default_color_theme("blue")
 
 # Pomodoro durations in seconds (for testing, you can set these to shorter times like 5 seconds for work and 5 seconds for break)
@@ -215,7 +215,7 @@ class FocusFlowApp(ctk.CTk):
         # Timer display frame
         timer_display_frame = ctk.CTkFrame(
             self.timer_frame,
-            fg_color=("gray20", "gray20"),
+            fg_color=("gray80", "gray20"),
             corner_radius=500
         ) # Create a frame to hold the timer display, with a foreground color of gray20 and a large corner radius to make it circular. This frame is a child of the timer frame (self.timer_frame).
         timer_display_frame.pack(pady=20, padx=20, fill="both", expand=True) # Pack the timer display frame into the timer frame with padding of 20 pixels on all sides (pady=20, padx=20), make it fill both horizontally and vertically (fill="both"), and allow it to expand to fill any remaining space (expand=True).
