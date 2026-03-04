@@ -1,0 +1,1 @@
+pyinstaller --windowed --onefile --icon="assets\FocusFlow logo.ico" --add-data="assets:assets" --name FocusFlow main.py

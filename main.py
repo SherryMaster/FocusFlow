@@ -5,7 +5,7 @@ import os
 import winsound
 import tkinter as tk
 
-ctk.set_appearance_mode("light")  # Modes: "System" (default), "Dark", "Light"
+ctk.set_appearance_mode("system")  # Modes: "System" (default), "Dark", "Light"
 ctk.set_default_color_theme("blue")
 
 # Pomodoro durations in seconds (for testing, you can set these to shorter times like 5 seconds for work and 5 seconds for break)
@@ -13,30 +13,30 @@ POMODORO_WORK_DURATION = 25 * 60  # 25 minutes in seconds
 POMODORO_BREAK_DURATION = 5 * 60  # 5 minutes in seconds
 
 WORK_COLOR_SCHEME = {
-    "bg_color": ("#E63946", "#E63946"),  # Background color for work sessions (vibrant red)
-    "text_color": ("#FF6B6B", "#FF6B6B"),  # Primary text color for work sessions (bright red)
-    "primary_text": ("#F77F88", "#F77F88"),  # Primary text color for work sessions (redish pink)
-    "secondary_text": ("#F0F0F0", "#F0F0F0"),  # Secondary text color for work sessions (light gray)
-    "progress_color": ("#F77F88", "#F77F88"),  # Progress bar color for work sessions (coral red)
-    "hover_color": ("#D62828", "#D62828")  # Hover color for work session buttons (darker red)
+    "bg_color": ("#DC2626", "#991B1B"),  # Background color for work sessions
+    "text_color": ("#EF4444", "#FECACA"),  # Primary text color for work sessions
+    "primary_text": ("#DC2626", "#FECACA"),  # Primary text color for work sessions
+    "secondary_text": ("#1F2937", "#F3F4F6"),  # Secondary text color for work sessions
+    "progress_color": ("#EF4444", "#F87171"),  # Progress bar color for work sessions
+    "hover_color": ("#B91C1C", "#DC2626")  # Hover color for work session buttons
 }
 
 BREAK_COLOR_SCHEME = {
-    "bg_color": ("#06A77D", "#06A77D"),  # Background color for break sessions (forest green)
-    "text_color": ("#52B788", "#52B788"),  # Primary text color for break sessions (sage green)
-    "primary_text": ("#06D584", "#06D584"),  # Primary text color for break sessions (bright green)
-    "secondary_text": ("#E0F5F0", "#E0F5F0"),  # Secondary text color for break sessions (very light teal)
-    "progress_color": ("#52B788", "#52B788"),  # Progress bar color for break sessions (sage green)
-    "hover_color": ("#048659", "#048659")  # Hover color for break session buttons (darker green)
+    "bg_color": ("#059669", "#065F46"),  # Background color for break sessions
+    "text_color": ("#10B981", "#6EE7B7"),  # Primary text color for break sessions
+    "primary_text": ("#059669", "#6EE7B7"),  # Primary text color for break sessions
+    "secondary_text": ("#1F2937", "#F0FDF4"),  # Secondary text color for break sessions
+    "progress_color": ("#10B981", "#34D399"),  # Progress bar color for break sessions
+    "hover_color": ("#047857", "#059669")  # Hover color for break session buttons
 }
 
 DEFAULT_COLOR_SCHEME = {
-    "bg_color": ("#0077B6", "#0077B6"),  # Background color for normal sessions (ocean blue)
-    "text_color": ("#00B4D8", "#00B4D8"),  # Primary text color for normal sessions (sky blue)
-    "primary_text": ("#0096C7", "#0096C7"),  # Primary text color for normal sessions (medium blue)
-    "secondary_text": ("#E0F4FF", "#E0F4FF"),  # Secondary text color for normal sessions (light blue)
-    "progress_color": ("#00B4D8", "#00B4D8"),  # Progress bar color for normal sessions (sky blue)
-    "hover_color": ("#005A87", "#005A87")  # Hover color for normal session buttons (darker blue)
+    "bg_color": ("#0284C7", "#0C4A6E"),  # Background color for normal sessions
+    "text_color": ("#0EA5E9", "#7DD3FC"),  # Primary text color for normal sessions
+    "primary_text": ("#0284C7", "#7DD3FC"),  # Primary text color for normal sessions
+    "secondary_text": ("#1F2937", "#F0F9FF"),  # Secondary text color for normal sessions
+    "progress_color": ("#0EA5E9", "#38BDF8"),  # Progress bar color for normal sessions
+    "hover_color": ("#075985", "#0284C7")  # Hover color for normal session buttons
 }
 
 class NotificationHandler:
