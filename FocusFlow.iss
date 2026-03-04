@@ -11,7 +11,7 @@ Compression=lzma
 SolidCompression=yes
 
 [Files]
-Source: "dist\main.exe"; DestDir: "{app}"
+Source: "dist\FocusFlow.exe"; DestDir: "{app}"
 
 [Icons]
 Name: "{autoprograms}\FocusFlow"; Filename: "{app}\main.exe"
