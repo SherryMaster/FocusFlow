@@ -448,6 +448,7 @@ class FocusFlowApp(ctk.CTk):
         self.session_label.configure(text_color=color_scheme["primary_text"])
         self.duration_label.configure(text_color=color_scheme["secondary_text"])
         self.cycles_label.configure(text_color=color_scheme["secondary_text"])
+        self.notification_toggle.configure(fg_color=color_scheme["bg_color"], hover_color=color_scheme["hover_color"])
         
         for task_element in self.scroll_frame.winfo_children():
             for widget in task_element.winfo_children():
